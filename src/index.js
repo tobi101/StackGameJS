@@ -10,31 +10,14 @@ let speed = 0.04;
 let direction = new THREE.Vector3(1, 0, 0);
 let gameOver = false;
 
-init();
+main();
 
-function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB);
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(4, 10, 10); // Подняли камеру выше
-    camera.lookAt(0, 0, 0); // Направили её на центр структуры
-
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.enableZoom = false;
-
-    // Добавление источников света
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-
-    const ambientLight = new THREE.AmbientLight(0x404040);
-    scene.add(ambientLight);
+function main() {
+    initScene();
+    initCamera();
+    initRender();
+    initControls();
+    initLight();
 
     startGame();
 
@@ -43,8 +26,49 @@ function init() {
     animate();
 }
 
+function initScene()
+{
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB);
+}
+
+function initCamera()
+{
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(4, 10, 10); // Подняли камеру выше
+    camera.lookAt(0, 0, 0); // Направили её на центр структуры
+}
+
+function initRender()
+{
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+}
+
+function initLight()
+{
+    // add directional light
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+    // add ambientLight
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+}
+
 function startGame() {
-    // Удаляем все блоки
+    clear();
+
+    addLayer(0, 0, boxSize, boxSize);
+    addLayer(-boxSize, 0, boxSize, boxSize, 'x');
+
+    animate();
+}
+
+function clear()
+{
     stack.forEach(layer => scene.remove(layer.mesh));
     overhangs.forEach(overhang => scene.remove(overhang.mesh));
 
@@ -52,22 +76,23 @@ function startGame() {
     overhangs = [];
     height = 0;
     gameOver = false;
-
-    addLayer(0, 0, boxSize, boxSize);
-    addLayer(-boxSize, 0, boxSize, boxSize, 'x');
-
-    animate(); // Перезапуск анимации
 }
 
 function addLayer(x, z, width, depth, axis) {
-    if (gameOver) return;
+    if (gameOver)
+        return;
+
     let y = height;
     let layer = generateBox(x, y, z, width, depth);
+
     stack.push(layer);
+
     if (axis) {
         layer.direction = axis;
     }
+
     height++;
+    camera.position.y++;
 }
 
 function generateBox(x, y, z, width, depth) {
